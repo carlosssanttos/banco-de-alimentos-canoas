@@ -1,0 +1,16 @@
+### 1. Fazer Login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@bancoalimentos.local",
+  "senha": "Admin@123"
+}
+
+### 2. Testar Rota Protegida (Cole o token gerado no login logo após a palavra Bearer)
+GET http://localhost:8080/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcwNTZjNjFmLWFiZjQtNDMxMy04ODE3LWYyMjNjNDcxMjJiNCJ9.wllC-SMcn1pSxAx2oIEyOTsn6g8cu_Fm5-NW9Qr0xsw
+
+### 3. Testar Alimentos (Exemplo de GET)
+GET http://localhost:8080/alimentos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcwNTZjNjFmLWFiZjQtNDMxMy04ODE3LWYyMjNjNDcxMjJiNCJ9.wllC-SMcn1pSxAx2oIEyOTsn6g8cu_Fm5-NW9Qr0xsw

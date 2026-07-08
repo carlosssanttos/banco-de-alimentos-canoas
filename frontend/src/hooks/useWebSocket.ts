@@ -4,16 +4,36 @@ import { TOKEN_STORAGE_KEY } from '@/services/api'
 
 const MAX_DELAY = 30000
 
+// Eventos internos do protocolo — não são notificações pro usuário.
+const EVENTOS_IGNORADOS = new Set(['conectado', 'ping'])
+
+// Traduz os eventos de negócio (emitidos pelos routers via ws_manager) em
+// mensagens legíveis. Eventos fora desse mapa caem no fallback genérico.
+const EVENTO_INFO: Record<string, { tipo: Notificacao['tipo']; mensagem: (dados: Record<string, unknown>) => string }> = {
+  lote_criado: { tipo: 'lote', mensagem: (d) => `Novo lote registrado${d.criado_por ? ` por ${d.criado_por}` : ''}` },
+  lote_estragado: { tipo: 'lote', mensagem: (d) => `Lote marcado como estragado${d.registrado_por ? ` por ${d.registrado_por}` : ''}` },
+  lote_deletado: { tipo: 'lote', mensagem: () => 'Lote removido do estoque' },
+  distribuicao_criada: { tipo: 'distribuicao', mensagem: (d) => `Nova distribuição registrada${d.registrado_por ? ` por ${d.registrado_por}` : ''}` },
+  distribuicao_atualizada: { tipo: 'distribuicao', mensagem: (d) => `Distribuição atualizada${d.registrado_por ? ` por ${d.registrado_por}` : ''}` },
+  distribuicao_excluida: { tipo: 'distribuicao', mensagem: (d) => `Distribuição excluída${d.registrado_por ? ` por ${d.registrado_por}` : ''}` },
+}
+
 function tryParseJson(raw: string): Notificacao | null {
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>
+    const evento = parsed.evento as string | undefined
+    if (evento && EVENTOS_IGNORADOS.has(evento)) return null
+
+    const dados = (parsed.dados as Record<string, unknown>) ?? {}
+    const info = evento ? EVENTO_INFO[evento] : undefined
+
     return {
       id: crypto.randomUUID(),
-      tipo: (parsed.tipo as Notificacao['tipo']) || 'sistema',
-      mensagem: (parsed.mensagem as string) || String(raw),
+      tipo: info?.tipo ?? (parsed.tipo as Notificacao['tipo']) ?? 'sistema',
+      mensagem: info ? info.mensagem(dados) : (parsed.mensagem as string) || String(raw),
       lida: false,
       criadaEm: new Date().toISOString(),
-      dados: parsed.dados as Record<string, unknown> | undefined,
+      dados,
     }
   } catch {
     return {

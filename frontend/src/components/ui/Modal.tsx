@@ -21,14 +21,20 @@ const sizes = {
 
 export function Modal({ isOpen, onClose, title, children, size = 'md', footer }: ModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!isOpen) return
     closeButtonRef.current?.focus()
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen) return null
 

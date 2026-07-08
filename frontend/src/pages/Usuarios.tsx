@@ -14,7 +14,7 @@ import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { formatDatetime } from '@/utils/formatDate'
 
-const emptyForm: UsuarioForm = { nome: '', sobrenome: '', email: '', senha: '', permissao: 'operador' }
+const emptyForm: UsuarioForm = { nome: '', sobrenome: '', email: '', senha: '', nivel: 'operador' }
 
 export function Usuarios() {
   const { usuario: currentUser, isDemo } = useAuth()
@@ -52,7 +52,7 @@ export function Usuarios() {
 
   function openEdit(u: UsuarioCompleto) {
     setEditTarget(u)
-    setForm({ nome: u.nome, sobrenome: u.sobrenome ?? '', email: u.email, senha: '', permissao: u.permissao ?? 'operador' })
+    setForm({ nome: u.nome, sobrenome: u.sobrenome ?? '', email: u.email, senha: '', nivel: u.nivel ?? 'operador' })
     setFormError('')
     setModalOpen(true)
   }
@@ -95,10 +95,10 @@ export function Usuarios() {
     { key: 'nome', header: 'Nome', render: (r: UsuarioCompleto) => `${r.nome}${r.sobrenome ? ' ' + r.sobrenome : ''}` },
     { key: 'email', header: 'E-mail' },
     {
-      key: 'permissao', header: 'Permissão',
+      key: 'nivel', header: 'Permissão',
       render: (r: UsuarioCompleto) => (
-        <Badge variant={r.permissao === 'admin' ? 'info' : 'neutral'}>
-          {r.permissao === 'admin' ? 'Administrador' : 'Operador'}
+        <Badge variant={r.nivel === 'admin' ? 'info' : 'neutral'}>
+          {r.nivel === 'admin' ? 'Administrador' : 'Operador'}
         </Badge>
       ),
     },
@@ -141,7 +141,7 @@ export function Usuarios() {
             <Input label="Sobrenome" value={form.sobrenome ?? ''} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} placeholder="Sobrenome" />
           </div>
           <Input label="E-mail *" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@exemplo.com" />
-          <Select label="Permissão" value={form.permissao ?? 'operador'} onChange={(e) => setForm({ ...form, permissao: e.target.value })}
+          <Select label="Permissão" value={form.nivel ?? 'operador'} onChange={(e) => setForm({ ...form, nivel: e.target.value })}
             options={[{ value: 'operador', label: 'Operador' }, { value: 'admin', label: 'Administrador' }]} placeholder="" />
           <Input
             label={editTarget ? 'Nova Senha (deixe em branco para não alterar)' : 'Senha *'}

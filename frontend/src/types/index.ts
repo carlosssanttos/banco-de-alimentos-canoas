@@ -1,9 +1,9 @@
 // Auth
 export interface Usuario {
-  id: number
+  id: string
   nome: string
   email: string
-  permissao: 'admin' | 'operador'
+  nivel: 'admin' | 'operador'
 }
 
 export interface LoginResponse {
@@ -133,7 +133,7 @@ export interface UsuarioCompleto {
   nome: string
   sobrenome?: string
   email: string
-  permissao?: string
+  nivel?: string
   criado_em?: string
 }
 
@@ -142,7 +142,7 @@ export interface UsuarioForm {
   sobrenome?: string
   email: string
   senha?: string
-  permissao?: string
+  nivel?: string
 }
 
 // Dashboard

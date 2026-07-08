@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date
 import uuid
 
-from database import get_db
+from database import get_db, safe_commit
 from models import Distribuicao, Lote, Usuario
 from security import get_usuario_atual
 from ws_manager import manager
@@ -22,7 +22,7 @@ class DistribuicaoSchema(BaseModel):
     """
     id_lote: uuid.UUID
     id_entidade: uuid.UUID
-    quantidade: float
+    quantidade: float = Field(gt=0)
     data: date
 
     class Config:
@@ -110,3 +110,91 @@ async def criar(
     })
 
     return dist
+
+
+@router.put("/{id}")
+async def atualizar(
+    id: uuid.UUID,
+    data: DistribuicaoSchema,
+    usuario: Usuario = Depends(get_usuario_atual),
+    db: Session = Depends(get_db),
+):
+    dist = db.query(Distribuicao).filter(Distribuicao.id == id).first()
+    if not dist:
+        raise HTTPException(404, "Distribuição não encontrada")
+
+    old_lote = db.query(Lote).filter(Lote.id == dist.id_lote).first()
+    if old_lote:
+        # Reverte primeiro, sempre — antes de validar a nova quantidade, para
+        # não rejeitar incorretamente uma correção no mesmo lote.
+        old_lote.quantidade += dist.quantidade
+
+    if data.id_lote == dist.id_lote:
+        novo_lote = old_lote
+    else:
+        novo_lote = db.query(Lote).filter(Lote.id == data.id_lote).first()
+
+    if not novo_lote:
+        raise HTTPException(404, "Lote não encontrado")
+    if novo_lote.esta_estragado:
+        raise HTTPException(400, "Lote marcado como estragado, não pode ser distribuído")
+    if novo_lote.quantidade < data.quantidade:
+        raise HTTPException(
+            400,
+            f"Quantidade insuficiente no lote (disponível: {float(novo_lote.quantidade):.3f})",
+        )
+
+    novo_lote.quantidade -= data.quantidade
+
+    dist.id_lote = data.id_lote
+    dist.id_entidade = data.id_entidade
+    dist.quantidade = data.quantidade
+    dist.data = data.data
+
+    safe_commit(db)
+    db.refresh(dist)
+
+    await manager.broadcast_json({
+        "evento": "distribuicao_atualizada",
+        "dados": {
+            "id": str(dist.id),
+            "id_lote": str(dist.id_lote),
+            "id_entidade": str(dist.id_entidade),
+            "quantidade": float(dist.quantidade),
+            "data": str(dist.data),
+            "registrado_por": f"{usuario.nome} {usuario.sobrenome}",
+            "estoque_restante_lote": float(novo_lote.quantidade),
+        },
+    })
+
+    return dist
+
+
+@router.delete("/{id}")
+async def deletar(
+    id: uuid.UUID,
+    usuario: Usuario = Depends(get_usuario_atual),
+    db: Session = Depends(get_db),
+):
+    dist = db.query(Distribuicao).filter(Distribuicao.id == id).first()
+    if not dist:
+        raise HTTPException(404, "Distribuição não encontrada")
+
+    lote = db.query(Lote).filter(Lote.id == dist.id_lote).first()
+    if lote:
+        lote.quantidade += dist.quantidade
+
+    db.delete(dist)
+    safe_commit(db)
+
+    await manager.broadcast_json({
+        "evento": "distribuicao_excluida",
+        "dados": {
+            "id": str(id),
+            "id_lote": str(dist.id_lote),
+            "registrado_por": f"{usuario.nome} {usuario.sobrenome}",
+            "estoque_restante_lote": float(lote.quantidade) if lote else None,
+        },
+    })
+
+    return {"ok": True}

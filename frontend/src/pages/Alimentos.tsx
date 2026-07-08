@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
 import { AlimentosService } from '@/services/AlimentosService'
 import { AuxiliaresService } from '@/services/AuxiliaresService'
 import type { Alimento, AlimentoForm, Tipo, Marca, Unidade } from '@/types'
@@ -33,6 +33,12 @@ export function Alimentos() {
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const debouncedSearch = useDebounce(search, 300)
+
+  const [addingField, setAddingField] = useState<'tipo' | 'marca' | 'unidade' | null>(null)
+  const [newNome, setNewNome] = useState('')
+  const [newDescricao, setNewDescricao] = useState('')
+  const [addingSaving, setAddingSaving] = useState(false)
+  const [addingError, setAddingError] = useState('')
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -71,6 +77,7 @@ export function Alimentos() {
     setEditTarget(null)
     setForm(emptyForm)
     setFormError('')
+    setAddingField(null)
     setModalOpen(true)
   }
 
@@ -84,7 +91,46 @@ export function Alimentos() {
       descricao: a.descricao ?? '',
     })
     setFormError('')
+    setAddingField(null)
     setModalOpen(true)
+  }
+
+  function openAddField(field: 'tipo' | 'marca' | 'unidade') {
+    setAddingField(field)
+    setNewNome('')
+    setNewDescricao('')
+    setAddingError('')
+  }
+
+  function closeAddField() {
+    setAddingField(null)
+  }
+
+  async function confirmAddField() {
+    if (!addingField) return
+    if (!newNome.trim()) { setAddingError('Nome é obrigatório.'); return }
+    setAddingSaving(true)
+    setAddingError('')
+    try {
+      if (addingField === 'tipo') {
+        const novo = await AuxiliaresService.criarTipo({ nome: newNome.trim(), descricao: newDescricao.trim() || undefined })
+        setTipos((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)))
+        setForm((f) => ({ ...f, id_tipo: novo.id }))
+      } else if (addingField === 'marca') {
+        const novo = await AuxiliaresService.criarMarca(newNome.trim())
+        setMarcas((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)))
+        setForm((f) => ({ ...f, id_marca: novo.id }))
+      } else {
+        const novo = await AuxiliaresService.criarUnidade(newNome.trim())
+        setUnidades((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)))
+        setForm((f) => ({ ...f, id_unidade: novo.id }))
+      }
+      setAddingField(null)
+    } catch {
+      setAddingError('Erro ao criar. Tente novamente.')
+    } finally {
+      setAddingSaving(false)
+    }
   }
 
   async function handleSave() {
@@ -173,12 +219,84 @@ export function Alimentos() {
         <div className="flex flex-col gap-4">
           {formError && <Alert variant="danger">{formError}</Alert>}
           <Input label="Nome *" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome do alimento" />
-          <Select label="Tipo" value={form.id_tipo ?? ''} onChange={(e) => setForm({ ...form, id_tipo: e.target.value })}
-            options={tipos.map((t) => ({ value: t.id, label: t.nome }))} placeholder="Selecione o tipo" />
-          <Select label="Marca" value={form.id_marca ?? ''} onChange={(e) => setForm({ ...form, id_marca: e.target.value })}
-            options={marcas.map((m) => ({ value: m.id, label: m.nome }))} placeholder="Selecione a marca" />
-          <Select label="Unidade" value={form.id_unidade ?? ''} onChange={(e) => setForm({ ...form, id_unidade: e.target.value })}
-            options={unidades.map((u) => ({ value: u.id, label: u.nome }))} placeholder="Selecione a unidade" />
+
+          <div className="flex flex-col gap-1">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                {addingField === 'tipo' ? (
+                  <Input label="Novo Tipo *" value={newNome} onChange={(e) => setNewNome(e.target.value)} placeholder="Nome do tipo" autoFocus />
+                ) : (
+                  <Select label="Tipo" value={form.id_tipo ?? ''} onChange={(e) => setForm({ ...form, id_tipo: e.target.value })}
+                    options={tipos.map((t) => ({ value: t.id, label: t.nome }))} placeholder="Selecione o tipo" />
+                )}
+              </div>
+              {addingField === 'tipo' ? (
+                <>
+                  <Button size="sm" variant="ghost" onClick={confirmAddField} loading={addingSaving} aria-label="Confirmar novo tipo"><Check size={16} /></Button>
+                  <Button size="sm" variant="ghost" onClick={closeAddField} aria-label="Cancelar"><X size={16} /></Button>
+                </>
+              ) : (
+                <Button size="sm" variant="ghost" onClick={() => openAddField('tipo')} disabled={isDemo}
+                  title={isDemo ? 'Indisponível no modo demonstração' : 'Adicionar novo tipo'} aria-label="Adicionar novo tipo">
+                  <Plus size={16} />
+                </Button>
+              )}
+            </div>
+            {addingField === 'tipo' && (
+              <Input value={newDescricao} onChange={(e) => setNewDescricao(e.target.value)} placeholder="Descrição (opcional)" />
+            )}
+            {addingField === 'tipo' && addingError && <p className="text-xs text-status-danger">{addingError}</p>}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                {addingField === 'marca' ? (
+                  <Input label="Nova Marca *" value={newNome} onChange={(e) => setNewNome(e.target.value)} placeholder="Nome da marca" autoFocus />
+                ) : (
+                  <Select label="Marca" value={form.id_marca ?? ''} onChange={(e) => setForm({ ...form, id_marca: e.target.value })}
+                    options={marcas.map((m) => ({ value: m.id, label: m.nome }))} placeholder="Selecione a marca" />
+                )}
+              </div>
+              {addingField === 'marca' ? (
+                <>
+                  <Button size="sm" variant="ghost" onClick={confirmAddField} loading={addingSaving} aria-label="Confirmar nova marca"><Check size={16} /></Button>
+                  <Button size="sm" variant="ghost" onClick={closeAddField} aria-label="Cancelar"><X size={16} /></Button>
+                </>
+              ) : (
+                <Button size="sm" variant="ghost" onClick={() => openAddField('marca')} disabled={isDemo}
+                  title={isDemo ? 'Indisponível no modo demonstração' : 'Adicionar nova marca'} aria-label="Adicionar nova marca">
+                  <Plus size={16} />
+                </Button>
+              )}
+            </div>
+            {addingField === 'marca' && addingError && <p className="text-xs text-status-danger">{addingError}</p>}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                {addingField === 'unidade' ? (
+                  <Input label="Nova Unidade *" value={newNome} onChange={(e) => setNewNome(e.target.value)} placeholder="Ex: kg, L, un" autoFocus />
+                ) : (
+                  <Select label="Unidade" value={form.id_unidade ?? ''} onChange={(e) => setForm({ ...form, id_unidade: e.target.value })}
+                    options={unidades.map((u) => ({ value: u.id, label: u.nome }))} placeholder="Selecione a unidade" />
+                )}
+              </div>
+              {addingField === 'unidade' ? (
+                <>
+                  <Button size="sm" variant="ghost" onClick={confirmAddField} loading={addingSaving} aria-label="Confirmar nova unidade"><Check size={16} /></Button>
+                  <Button size="sm" variant="ghost" onClick={closeAddField} aria-label="Cancelar"><X size={16} /></Button>
+                </>
+              ) : (
+                <Button size="sm" variant="ghost" onClick={() => openAddField('unidade')} disabled={isDemo}
+                  title={isDemo ? 'Indisponível no modo demonstração' : 'Adicionar nova unidade'} aria-label="Adicionar nova unidade">
+                  <Plus size={16} />
+                </Button>
+              )}
+            </div>
+            {addingField === 'unidade' && addingError && <p className="text-xs text-status-danger">{addingError}</p>}
+          </div>
         </div>
       </Modal>
 

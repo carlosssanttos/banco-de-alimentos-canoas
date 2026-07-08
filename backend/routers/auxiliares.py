@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uuid
 
-from database import get_db
+from database import get_db, safe_commit
 from models import Tipo, Marca, Unidade, Parceiro, PontoColeta, EntidadeBeneficiaria, Usuario
 from security import get_usuario_atual, exigir_admin
 
@@ -74,7 +74,7 @@ def listar_tipos(_: Usuario = Depends(get_usuario_atual), db: Session = Depends(
 @router.post("/tipos", status_code=201)
 def criar_tipo(
     data: TipoSchema,
-    _: Usuario = Depends(exigir_admin),
+    _: Usuario = Depends(get_usuario_atual),
     db: Session = Depends(get_db),
 ):
     tipo = Tipo(**data.model_dump())
@@ -94,7 +94,7 @@ def listar_marcas(_: Usuario = Depends(get_usuario_atual), db: Session = Depends
 @router.post("/marcas", status_code=201)
 def criar_marca(
     data: MarcaSchema,
-    _: Usuario = Depends(exigir_admin),
+    _: Usuario = Depends(get_usuario_atual),
     db: Session = Depends(get_db),
 ):
     marca = Marca(nome=data.nome)
@@ -114,7 +114,7 @@ def listar_unidades(_: Usuario = Depends(get_usuario_atual), db: Session = Depen
 @router.post("/unidades", status_code=201)
 def criar_unidade(
     data: UnidadeSchema,
-    _: Usuario = Depends(exigir_admin),
+    _: Usuario = Depends(get_usuario_atual),
     db: Session = Depends(get_db),
 ):
     unidade = Unidade(nome=data.nome)
@@ -181,7 +181,7 @@ def deletar_parceiro(
     if not parceiro:
         raise HTTPException(404, "Parceiro não encontrado")
     db.delete(parceiro)
-    db.commit()
+    safe_commit(db)
     return {"ok": True}
 
 
@@ -274,5 +274,5 @@ def deletar_entidade(
     if not e:
         raise HTTPException(404, "Entidade não encontrada")
     db.delete(e)
-    db.commit()
+    safe_commit(db)
     return {"ok": True}

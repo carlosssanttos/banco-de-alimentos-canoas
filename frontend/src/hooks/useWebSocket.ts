@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { Notificacao } from '@/types'
+import { TOKEN_STORAGE_KEY } from '@/services/api'
 
 const MAX_DELAY = 30000
 
@@ -34,7 +35,10 @@ export function useWebSocket() {
 
   const connect = useCallback(() => {
     if (unmountedRef.current) return
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+    if (!token || token === '__DEMO__') return
+    const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
+    const wsUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 

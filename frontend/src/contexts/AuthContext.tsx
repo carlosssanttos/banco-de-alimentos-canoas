@@ -30,7 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) { setIsLoading(false); return }
     if (token === DEMO_TOKEN) {
       const saved = localStorage.getItem(USER_STORAGE_KEY)
-      if (saved) setUsuario(JSON.parse(saved) as Usuario)
+      const parsed = saved ? (JSON.parse(saved) as Usuario) : null
+      if (parsed?.nivel) {
+        setUsuario(parsed)
+      } else {
+        localStorage.removeItem(TOKEN_STORAGE_KEY)
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
       setIsLoading(false)
       return
     }
@@ -44,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   function loginDemo() {
-    const demoUser: Usuario = { id: 0, nome: 'Usuário Demo', email: 'demo@banco.rs', permissao: 'admin' }
+    const demoUser: Usuario = { id: '0', nome: 'Usuário Demo', email: 'demo@banco.rs', nivel: 'admin' }
     localStorage.setItem(TOKEN_STORAGE_KEY, '__DEMO__')
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(demoUser))
     setUsuario(demoUser)
@@ -73,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         usuario,
         isAuthenticated: !!usuario,
         isLoading,
-        isAdmin: usuario?.permissao === 'admin',
+        isAdmin: usuario?.nivel === 'admin',
         isDemo: localStorage.getItem(TOKEN_STORAGE_KEY) === DEMO_TOKEN,
         login,
         loginDemo,

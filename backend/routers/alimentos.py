@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uuid
 
-from database import get_db
+from database import get_db, safe_commit
 from models import Alimento, Usuario
 from security import get_usuario_atual, exigir_admin
 
@@ -86,5 +86,5 @@ def deletar(
     if not a:
         raise HTTPException(404, "Alimento não encontrado")
     db.delete(a)
-    db.commit()
+    safe_commit(db)
     return {"ok": True}

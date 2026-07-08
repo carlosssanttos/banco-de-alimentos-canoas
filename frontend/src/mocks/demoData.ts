@@ -137,7 +137,7 @@ export const DEMO_DISTRIBUICOES: Distribuicao[] = [
 // ── Usuários ──────────────────────────────────────────────────────────────────
 
 export const DEMO_USUARIOS: UsuarioCompleto[] = [
-  { id: '1', nome: 'Admin', sobrenome: 'Sistema', email: 'admin@bancoalimentos.rs', permissao: 'admin', criado_em: '2024-01-10T08:00:00' },
-  { id: '2', nome: 'Maria', sobrenome: 'Oliveira', email: 'maria.oliveira@bancoalimentos.rs', permissao: 'operador', criado_em: '2024-03-15T09:30:00' },
-  { id: '3', nome: 'João', sobrenome: 'Silva', email: 'joao.silva@bancoalimentos.rs', permissao: 'operador', criado_em: '2024-06-20T14:00:00' },
+  { id: '1', nome: 'Admin', sobrenome: 'Sistema', email: 'admin@bancoalimentos.rs', nivel: 'admin', criado_em: '2024-01-10T08:00:00' },
+  { id: '2', nome: 'Maria', sobrenome: 'Oliveira', email: 'maria.oliveira@bancoalimentos.rs', nivel: 'operador', criado_em: '2024-03-15T09:30:00' },
+  { id: '3', nome: 'João', sobrenome: 'Silva', email: 'joao.silva@bancoalimentos.rs', nivel: 'operador', criado_em: '2024-06-20T14:00:00' },
 ]

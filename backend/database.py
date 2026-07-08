@@ -1,5 +1,7 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -15,3 +17,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def safe_commit(db: Session):
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Não é possível excluir: existem registros vinculados a este item.")

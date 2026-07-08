@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 
-from database import get_db
+from database import get_db, safe_commit
 from models import Usuario
 from security import hash_senha, get_usuario_atual, exigir_admin
 
@@ -39,7 +39,7 @@ class UsuarioOut(BaseModel):
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
-@router.get("/", response_model=List[UsuarioOut])
+@router.get("", response_model=List[UsuarioOut])
 def listar_usuarios(
     _: Usuario = Depends(exigir_admin),
     db: Session = Depends(get_db),
@@ -47,7 +47,7 @@ def listar_usuarios(
     return db.query(Usuario).order_by(Usuario.nome).all()
 
 
-@router.post("/", response_model=UsuarioOut, status_code=201)
+@router.post("", response_model=UsuarioOut, status_code=201)
 def criar_usuario(
     usuario_data: UsuarioCreate,
     _: Usuario = Depends(exigir_admin),
@@ -147,5 +147,5 @@ def deletar_usuario(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado")
 
     db.delete(usuario)
-    db.commit()
+    safe_commit(db)
     return {"mensagem": "Usuário deletado com sucesso"}

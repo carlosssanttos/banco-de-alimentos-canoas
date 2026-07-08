@@ -203,7 +203,7 @@ export function Distribuicoes() {
           </>
         }
       >
-        <p className="text-gray-600">Deseja excluir esta distribuição? Atenção: a quantidade <strong>não</strong> será devolvida ao lote automaticamente.</p>
+        <p className="text-gray-600">Deseja excluir esta distribuição? A quantidade será devolvida automaticamente ao lote de origem.</p>
       </Modal>
     </>
   )

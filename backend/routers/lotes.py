@@ -6,7 +6,7 @@ from typing import Optional
 from datetime import date
 import uuid
 
-from database import get_db
+from database import get_db, safe_commit
 from models import Lote, Usuario
 from security import get_usuario_atual, exigir_admin
 from ws_manager import manager
@@ -147,7 +147,7 @@ async def deletar(
     if not lote:
         raise HTTPException(404, "Lote não encontrado")
     db.delete(lote)
-    db.commit()
+    safe_commit(db)
 
     await manager.broadcast_json({
         "evento": "lote_deletado",

@@ -11,6 +11,7 @@ import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { useDebounce } from '@/hooks/useDebounce'
 import { DEMO_PARCEIROS } from '@/mocks/demoData'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 type FormData = Omit<Parceiro, 'id'>
 
@@ -85,8 +86,8 @@ export function Parceiros() {
       await ParceirosService.excluir(deleteTarget.id)
       setDeleteTarget(null)
       await fetchData()
-    } catch {
-      setError('Erro ao excluir parceiro.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao excluir parceiro.'))
       setDeleteTarget(null)
     }
   }

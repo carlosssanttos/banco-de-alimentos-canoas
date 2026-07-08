@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { formatDatetime } from '@/utils/formatDate'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const emptyForm: UsuarioForm = { nome: '', sobrenome: '', email: '', senha: '', nivel: 'operador' }
 
@@ -85,8 +86,8 @@ export function Usuarios() {
       await UsuariosService.excluir(deleteTarget.id)
       setDeleteTarget(null)
       await fetchData()
-    } catch {
-      setError('Erro ao excluir usuário.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao excluir usuário.'))
       setDeleteTarget(null)
     }
   }

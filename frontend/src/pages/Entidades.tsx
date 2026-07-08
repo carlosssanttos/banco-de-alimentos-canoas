@@ -11,6 +11,7 @@ import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { useDebounce } from '@/hooks/useDebounce'
 import { DEMO_ENTIDADES } from '@/mocks/demoData'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 type FormData = Omit<Entidade, 'id'>
 const empty: FormData = { nome: '', contato: '', endereco: '' }
@@ -83,8 +84,8 @@ export function Entidades() {
       await EntidadesService.excluir(deleteTarget.id)
       setDeleteTarget(null)
       await fetchData()
-    } catch {
-      setError('Erro ao excluir entidade.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao excluir entidade.'))
       setDeleteTarget(null)
     }
   }

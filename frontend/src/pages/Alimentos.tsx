@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { useDebounce } from '@/hooks/useDebounce'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 import { DEMO_ALIMENTOS, DEMO_TIPOS, DEMO_MARCAS, DEMO_UNIDADES } from '@/mocks/demoData'
 
 const emptyForm: AlimentoForm = { nome: '', id_tipo: '', id_marca: '', id_unidade: '', descricao: '' }
@@ -161,8 +162,8 @@ export function Alimentos() {
       await AlimentosService.excluir(deleteTarget.id)
       setDeleteTarget(null)
       await fetchData()
-    } catch {
-      setError('Erro ao excluir alimento.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao excluir alimento.'))
       setDeleteTarget(null)
     }
   }

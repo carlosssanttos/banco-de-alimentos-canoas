@@ -15,6 +15,7 @@ import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { formatDate, today } from '@/utils/formatDate'
 import { formatQuantidade } from '@/utils/formatNumber'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 import { DEMO_DISTRIBUICOES, DEMO_ENTIDADES, DEMO_LOTES, DEMO_ALIMENTOS } from '@/mocks/demoData'
 
 const emptyForm: DistribuicaoForm = { id_lote: '', id_entidade: '', quantidade: 0, data: today() }
@@ -115,8 +116,8 @@ export function Distribuicoes() {
       await DistribuicoesService.excluir(deleteTarget.id)
       setDeleteTarget(null)
       await fetchData()
-    } catch {
-      setError('Erro ao excluir distribuição.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao excluir distribuição.'))
       setDeleteTarget(null)
     }
   }

@@ -17,6 +17,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { formatDate, daysUntil, today } from '@/utils/formatDate'
 import { formatQuantidade } from '@/utils/formatNumber'
 import { DEMO_LOTES, DEMO_ALIMENTOS, DEMO_PARCEIROS } from '@/mocks/demoData'
+import { getErrorMessage } from '@/utils/getErrorMessage'
 
 const emptyForm: LoteForm = {
   id_alimento: '',
@@ -150,8 +151,8 @@ export function Lotes() {
       await LotesService.excluir(deleteTarget.id)
       setDeleteTarget(null)
       await fetchData()
-    } catch {
-      setError('Erro ao excluir lote.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Erro ao excluir lote.'))
       setDeleteTarget(null)
     }
   }

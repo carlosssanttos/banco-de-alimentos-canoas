@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pydantic import BaseModel, Field
 from datetime import date
+from decimal import Decimal
 import uuid
 
 from database import get_db, safe_commit
@@ -91,7 +92,7 @@ async def criar(
         quantidade=data.quantidade,
         data=data.data,
     )
-    lote.quantidade -= data.quantidade
+    lote.quantidade -= Decimal(str(data.quantidade))
     db.add(dist)
     db.commit()
     db.refresh(dist)
@@ -144,7 +145,7 @@ async def atualizar(
             f"Quantidade insuficiente no lote (disponível: {float(novo_lote.quantidade):.3f})",
         )
 
-    novo_lote.quantidade -= data.quantidade
+    novo_lote.quantidade -= Decimal(str(data.quantidade))
 
     dist.id_lote = data.id_lote
     dist.id_entidade = data.id_entidade
